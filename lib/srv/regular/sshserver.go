@@ -1428,8 +1428,8 @@ func (s *Server) dispatch(ch ssh.Channel, req *ssh.Request, ctx *srv.ServerConte
 			}
 			return nil
 		default:
-			return trace.BadParameter(
-				"(%v) proxy doesn't support request type '%v'", s.Component(), req.Type)
+			ctx.Debugf("(%v) proxy doesn't support request type '%v'", s.Component(), req.Type)
+			return nil
 		}
 	}
 
@@ -1469,8 +1469,8 @@ func (s *Server) dispatch(ch ssh.Channel, req *ssh.Request, ctx *srv.ServerConte
 		}
 		return nil
 	default:
-		return trace.BadParameter(
-			"%v doesn't support request type '%v'", s.Component(), req.Type)
+		ctx.Debugf("%v doesn't support request type '%v'", s.Component(), req.Type)
+		return nil
 	}
 }
 

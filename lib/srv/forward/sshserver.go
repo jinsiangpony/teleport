@@ -923,8 +923,8 @@ func (s *Server) dispatch(ctx context.Context, ch ssh.Channel, req *ssh.Request,
 		}
 		return nil
 	default:
-		return trace.BadParameter(
-			"%v doesn't support request type '%v'", s.Component(), req.Type)
+		scx.Debugf("%v doesn't support request type '%v'", s.Component(), req.Type)
+		return nil
 	}
 }
 
