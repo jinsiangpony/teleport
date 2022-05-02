@@ -79,3 +79,8 @@ type Engine interface {
 	// the particular database instance.
 	HandleConnection(context.Context, *Session) error
 }
+
+// TODO
+type Users interface {
+	GetPassword(ctx context.Context, database types.Database, userName string) (string, error)
+}

@@ -49,8 +49,10 @@ func (s *Server) startReconciler(ctx context.Context) error {
 			case <-s.reconcileCh:
 				if err := reconciler.Reconcile(ctx); err != nil {
 					s.log.WithError(err).Error("Failed to reconcile.")
-				} else if s.cfg.OnReconcile != nil {
-					s.cfg.OnReconcile(s.getProxiedDatabases())
+				} else {
+					for _, onReconcile := range s.cfg.OnReconcile {
+						onReconcile(s.getProxiedDatabases())
+					}
 				}
 			case <-ctx.Done():
 				s.log.Debug("Reconciler done.")

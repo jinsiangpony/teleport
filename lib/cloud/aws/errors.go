@@ -32,6 +32,7 @@ func ConvertRequestFailureError(err error) error {
 		return err
 	}
 
+	// By status code.
 	switch requestErr.StatusCode() {
 	case http.StatusForbidden:
 		return trace.AccessDenied(requestErr.Error())
@@ -41,5 +42,10 @@ func ConvertRequestFailureError(err error) error {
 		return trace.NotFound(requestErr.Error())
 	}
 
+	// By exception type.
+	switch requestErr.Code() {
+	case "ResourceNotFoundException":
+		return trace.NotFound(requestErr.Error())
+	}
 	return err // Return unmodified.
 }

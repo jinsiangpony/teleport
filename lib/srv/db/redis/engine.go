@@ -195,13 +195,49 @@ func (e *Engine) getNewClientFn(ctx context.Context, sessionCtx *common.Session)
 	}
 
 	return func(username, password string) (redis.UniversalClient, error) {
-		redisClient, err := newClient(ctx, connectionOptions, tlsConfig, username, password)
+		redisClient, err := newClient(ctx, connectionOptions, tlsConfig, e.newOnConnectFunc(username, password, sessionCtx))
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
 
 		return redisClient, nil
 	}, nil
+}
+
+// newOnConnectFunc is called after new Redis client connections. This function
+// allows the client to use "dynamic" passwords for "auth" login.
+func (e *Engine) newOnConnectFunc(username, password string, sessionCtx *common.Session) func(ctx context.Context, conn *redis.Conn) error {
+	return func(ctx context.Context, conn *redis.Conn) error {
+		// Find password if not provided.
+		if password == "" {
+			switch {
+			case sessionCtx.Database.IsElastiCache():
+				fetchedPassword, err := e.Users.GetPassword(ctx, sessionCtx.Database, sessionCtx.DatabaseUser)
+				if err != nil {
+					if trace.IsNotFound(err) {
+						break
+					}
+					return trace.Wrap(err)
+				}
+
+				username = sessionCtx.DatabaseUser
+				password = fetchedPassword
+			}
+		}
+
+		// Send auth.
+		_, err := conn.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+			if password != "" {
+				if username != "" {
+					pipe.AuthACL(ctx, username, password)
+				} else {
+					pipe.Auth(ctx, password)
+				}
+			}
+			return nil
+		})
+		return trace.Wrap(err)
+	}
 }
 
 // reconnect closes the current Redis server connection and creates a new one pre-authenticated

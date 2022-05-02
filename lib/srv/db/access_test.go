@@ -1909,7 +1909,7 @@ func (c *testContext) setupDatabaseServer(ctx context.Context, t *testing.T, p a
 		CADownloader: &fakeDownloader{
 			cert: []byte(fixtures.TLSCACertPEM),
 		},
-		OnReconcile: p.OnReconcile,
+		OnReconcile: []func(types.Databases){p.OnReconcile},
 		LockWatcher: lockWatcher,
 		CloudClients: &common.TestCloudClients{
 			STS:      &cloud.STSMock{},
