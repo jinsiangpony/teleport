@@ -166,6 +166,9 @@ const (
 
 	// X11ChannelRequest is the type of an X11 forwarding channel.
 	X11ChannelRequest = "x11"
+
+	// PuTTYSimpleRequest is the name of an additional subsystem automatically requested by PuTTY when proxying connections.
+	PuTTYSimpleRequest = "simple@putty.projects.tartarus.org"
 )
 
 const (

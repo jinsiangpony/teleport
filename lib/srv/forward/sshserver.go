@@ -922,9 +922,14 @@ func (s *Server) dispatch(ctx context.Context, ch ssh.Channel, req *ssh.Request,
 			s.log.Debug(err)
 		}
 		return nil
-	default:
-		scx.Debugf("%v doesn't support request type '%v'", s.Component(), req.Type)
+	case sshutils.PuTTYSimpleRequest:
+		// PuTTY automatically requests an additional 'simple' subsystem any time it connects to a server
+		// as a proxy and makes a subsystem request. As we don't support this request, we ignore it.
+		s.log.Debugf("%v: ignoring request for '%v' subsystem", s.Component(), sshutils.PuTTYSimpleRequest)
 		return nil
+	default:
+		return trace.BadParameter(
+			"%v doesn't support request type '%v'", s.Component(), req.Type)
 	}
 }
 

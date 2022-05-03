@@ -1427,9 +1427,14 @@ func (s *Server) dispatch(ch ssh.Channel, req *ssh.Request, ctx *srv.ServerConte
 				log.Warn(err)
 			}
 			return nil
-		default:
-			ctx.Debugf("(%v) proxy doesn't support request type '%v'", s.Component(), req.Type)
+		case sshutils.PuTTYSimpleRequest:
+			// PuTTY automatically requests an additional 'simple' subsystem any time it connects to a server
+			// as a proxy and makes a subsystem request. As we don't support this request, we ignore it.
+			log.Debugf("%v: (proxy) ignoring request for '%v' subsystem", s.Component(), sshutils.PuTTYSimpleRequest)
 			return nil
+		default:
+			return trace.BadParameter(
+				"(%v) proxy doesn't support request type '%v'", s.Component(), req.Type)
 		}
 	}
 
@@ -1469,8 +1474,8 @@ func (s *Server) dispatch(ch ssh.Channel, req *ssh.Request, ctx *srv.ServerConte
 		}
 		return nil
 	default:
-		ctx.Debugf("%v doesn't support request type '%v'", s.Component(), req.Type)
-		return nil
+		return trace.BadParameter(
+			"%v doesn't support request type '%v'", s.Component(), req.Type)
 	}
 }
 
