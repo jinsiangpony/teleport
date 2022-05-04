@@ -20,6 +20,8 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/gravitational/trace"
 	"gopkg.in/yaml.v2"
@@ -36,7 +38,17 @@ type TshConfig struct {
 	// webclient requests.
 	ExtraHeaders []ExtraProxyHeaders `yaml:"add_headers"`
 	// ProxyTemplates describe rules for parsing out proxy out of full hostnames.
-	ProxyTemplates []ProxyTemplate `yaml:"proxy_templates"`
+	ProxyTemplates []*ProxyTemplate `yaml:"proxy_templates"`
+}
+
+// Check validates the tsh config.
+func (c *TshConfig) Check() error {
+	for _, template := range c.ProxyTemplates {
+		if err := template.Check(); err != nil {
+			return trace.Wrap(err)
+		}
+	}
+	return nil
 }
 
 // ExtraProxyHeaders represents the headers to include with the
@@ -57,6 +69,50 @@ type ProxyTemplate struct {
 	Proxy string `yaml:"proxy"`
 	// Host is optional hostname. Can refer to regex groups from the template.
 	Host string `yaml:"host"`
+	// re is the compiled template regexp.
+	re *regexp.Regexp
+}
+
+// Check validates the proxy template.
+func (t *ProxyTemplate) Check() (err error) {
+	if strings.TrimSpace(t.Template) == "" {
+		return trace.BadParameter("empty proxy template")
+	}
+	t.re, err = regexp.Compile(t.Template)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	if strings.TrimSpace(t.Proxy) == "" {
+		return trace.BadParameter("empty proxy expression")
+	}
+	return nil
+}
+
+// Apply applies the proxy template to the provided hostname and returns
+// expanded proxy address and hostname.
+func (t ProxyTemplate) Apply(fullHostname string) (proxy, host string, matched bool) {
+	match := t.re.FindAllStringSubmatchIndex(fullHostname, -1)
+	if match == nil {
+		return "", "", false
+	}
+
+	expandedProxy := []byte{}
+	for _, m := range match {
+		expandedProxy = t.re.ExpandString(expandedProxy, t.Proxy, fullHostname, m)
+	}
+	proxy = string(expandedProxy)
+
+	if t.Host != "" {
+		expandedHost := []byte{}
+		for _, m := range match {
+			expandedHost = t.re.ExpandString(expandedHost, t.Host, fullHostname, m)
+		}
+		host = string(expandedHost)
+	} else {
+		host = fullHostname
+	}
+
+	return proxy, host, true
 }
 
 func loadConfig(fullConfigPath string) (*TshConfig, error) {
@@ -67,10 +123,12 @@ func loadConfig(fullConfigPath string) (*TshConfig, error) {
 		}
 		return nil, trace.ConvertSystemError(err)
 	}
-
 	cfg := TshConfig{}
 	if err := yaml.Unmarshal(bs, &cfg); err != nil {
 		return nil, trace.ConvertSystemError(err)
+	}
+	if err := cfg.Check(); err != nil {
+		return nil, trace.Wrap(err)
 	}
 	return &cfg, nil
 }

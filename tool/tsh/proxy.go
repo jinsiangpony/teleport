@@ -24,7 +24,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -125,30 +124,17 @@ func sshProxyHostPort(cf *CLIConf, tc *libclient.TeleportClient) (string, string
 	if !strings.Contains(cf.Proxy, "{{proxy}}") {
 		return net.SplitHostPort(cf.Proxy)
 	}
-	proxy := tc.Host
 	for _, proxyTemplate := range cf.TshConfig.ProxyTemplates {
-		regex, err := regexp.Compile(proxyTemplate.Template)
-		if err != nil {
-			return "", "", trace.Wrap(err)
-		}
-
-		match := regex.FindAllStringSubmatchIndex(proxy, -1)
-		if match == nil {
-			fmt.Printf("\n[DEBUG] Template %q didn't match proxy %q.\n", proxyTemplate.Template, proxy)
+		proxy, _, matched := proxyTemplate.Apply(tc.Host)
+		if !matched {
+			fmt.Printf("\n[DEBUG] Template %q didn't match proxy %q.\n", proxyTemplate.Template, tc.Host)
 			continue
 		}
-
-		fmt.Printf("\n[DEBUG] Template %q matched proxy %q.\n", proxyTemplate.Template, proxy)
-
-		result := []byte{}
-		for _, m := range match {
-			result = regex.ExpandString(result, proxyTemplate.Proxy, proxy, m)
-		}
-
-		fmt.Printf("\n[DEBUG] Expanded proxy template %q to %q.\n", proxyTemplate.Proxy, string(result))
-		return net.SplitHostPort(string(result))
+		fmt.Printf("\n[DEBUG] Template %q matched proxy %q.\n", proxyTemplate.Template, tc.Host)
+		fmt.Printf("\n[DEBUG] Expanded proxy %q to %q.\n", proxyTemplate.Proxy, proxy)
+		return net.SplitHostPort(proxy)
 	}
-	return "", "", trace.BadParameter("failed to match proxy %q against any templates", proxy)
+	return "", "", trace.BadParameter("failed to match %q against any templates", tc.Host)
 }
 
 func sshProxy(cf *CLIConf, tc *libclient.TeleportClient, targetHost, targetPort string) error {
