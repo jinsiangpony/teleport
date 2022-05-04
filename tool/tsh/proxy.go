@@ -24,6 +24,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -59,13 +60,13 @@ func onProxyCommandSSH(cf *CLIConf) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	targetHost = cleanTargetHost(targetHost, tc.WebProxyHost(), tc.SiteName)
+	//targetHost = cleanTargetHost(targetHost, tc.WebProxyHost(), tc.SiteName)
 
 	if tc.TLSRoutingEnabled {
 		return trace.Wrap(sshProxyWithTLSRouting(cf, tc, targetHost, targetPort))
 	}
 
-	return trace.Wrap(sshProxy(tc, targetHost, targetPort))
+	return trace.Wrap(sshProxy(cf, tc, targetHost, targetPort))
 }
 
 // cleanTargetHost cleans the targetHost and remote site and proxy suffixes.
@@ -114,7 +115,43 @@ func sshProxyWithTLSRouting(cf *CLIConf, tc *libclient.TeleportClient, targetHos
 	return nil
 }
 
-func sshProxy(tc *libclient.TeleportClient, targetHost, targetPort string) error {
+func sshProxyHostPort(cf *CLIConf, tc *libclient.TeleportClient) (string, string, error) {
+	// If proxy address was specified explicitly on the command line via --proxy
+	// flag, use it. Otherwise, use the proxy from the current profile.
+	if cf.Proxy == "" {
+		host, port := tc.SSHProxyHostPort()
+		return host, strconv.Itoa(port), nil
+	}
+	if !strings.Contains(cf.Proxy, "{{proxy}}") {
+		return net.SplitHostPort(cf.Proxy)
+	}
+	proxy := tc.Host
+	for _, proxyTemplate := range cf.TshConfig.ProxyTemplates {
+		regex, err := regexp.Compile(proxyTemplate.Template)
+		if err != nil {
+			return "", "", trace.Wrap(err)
+		}
+
+		match := regex.FindAllStringSubmatchIndex(proxy, -1)
+		if match == nil {
+			fmt.Printf("\n[DEBUG] Template %q didn't match proxy %q.\n", proxyTemplate.Template, proxy)
+			continue
+		}
+
+		fmt.Printf("\n[DEBUG] Template %q matched proxy %q.\n", proxyTemplate.Template, proxy)
+
+		result := []byte{}
+		for _, m := range match {
+			result = regex.ExpandString(result, proxyTemplate.Proxy, proxy, m)
+		}
+
+		fmt.Printf("\n[DEBUG] Expanded proxy template %q to %q.\n", proxyTemplate.Proxy, string(result))
+		return net.SplitHostPort(string(result))
+	}
+	return "", "", trace.BadParameter("failed to match proxy %q against any templates", proxy)
+}
+
+func sshProxy(cf *CLIConf, tc *libclient.TeleportClient, targetHost, targetPort string) error {
 	sshPath, err := getSSHPath()
 	if err != nil {
 		return trace.Wrap(err)
@@ -122,11 +159,15 @@ func sshProxy(tc *libclient.TeleportClient, targetHost, targetPort string) error
 	keysDir := profile.FullProfilePath(tc.Config.KeysDir)
 	knownHostsPath := keypaths.KnownHostsPath(keysDir)
 
-	sshHost, sshPort := tc.SSHProxyHostPort()
+	sshHost, sshPort, err := sshProxyHostPort(cf, tc)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
 	args := []string{
 		"-A",
 		"-o", fmt.Sprintf("UserKnownHostsFile=%s", knownHostsPath),
-		"-p", strconv.Itoa(sshPort),
+		"-p", sshPort,
 		sshHost,
 		"-s",
 		fmt.Sprintf("proxy:%s:%s@%s", targetHost, targetPort, tc.SiteName),
@@ -135,6 +176,7 @@ func sshProxy(tc *libclient.TeleportClient, targetHost, targetPort string) error
 	if tc.HostLogin != "" {
 		args = append([]string{"-l", tc.HostLogin}, args...)
 	}
+	fmt.Printf("[DEBUG] %v\n", strings.Join(args, " "))
 
 	child := exec.Command(sshPath, args...)
 	child.Stdin = os.Stdin

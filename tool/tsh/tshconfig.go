@@ -35,6 +35,8 @@ type TshConfig struct {
 	// ExtraHeaders are additional http headers to be included in
 	// webclient requests.
 	ExtraHeaders []ExtraProxyHeaders `yaml:"add_headers"`
+	// ProxyTemplates describe rules for parsing out proxy out of full hostnames.
+	ProxyTemplates []ProxyTemplate `yaml:"proxy_templates"`
 }
 
 // ExtraProxyHeaders represents the headers to include with the
@@ -44,6 +46,17 @@ type ExtraProxyHeaders struct {
 	Proxy string `yaml:"proxy"`
 	// Headers are the http header key values.
 	Headers map[string]string `yaml:"headers,omitempty"`
+}
+
+// ProxyTemplate describes a single rule for parsing out proxy address from
+// the full hostname. Used by tsh proxy ssh.
+type ProxyTemplate struct {
+	// Template is a regular expression that full hostname is matched against.
+	Template string `yaml:"template"`
+	// Proxy is the proxy address. Can refer to regex groups from the template.
+	Proxy string `yaml:"proxy"`
+	// Host is optional hostname. Can refer to regex groups from the template.
+	Host string `yaml:"host"`
 }
 
 func loadConfig(fullConfigPath string) (*TshConfig, error) {

@@ -304,8 +304,8 @@ type CLIConf struct {
 	// displayParticipantRequirements is set if verbose participant requirement information should be printed for moderated sessions.
 	displayParticipantRequirements bool
 
-	// ExtraProxyHeaders is configuration read from the .tsh/config/config.yaml file.
-	ExtraProxyHeaders []ExtraProxyHeaders
+	// TshConfig is the loaded tsh configuration file ~/.tsh/config/config.yaml.
+	TshConfig TshConfig
 }
 
 // Stdout returns the stdout writer.
@@ -736,7 +736,7 @@ func Run(args []string, opts ...cliOption) error {
 	if err != nil {
 		return trace.Wrap(err, "failed to load tsh config from %s", fullConfigPath)
 	}
-	cf.ExtraProxyHeaders = confOptions.ExtraHeaders
+	cf.TshConfig = *confOptions
 
 	switch command {
 	case ver.FullCommand():
@@ -2276,7 +2276,7 @@ func makeClient(cf *CLIConf, useProfileLogin bool) (*client.TeleportClient, erro
 	if c.ExtraProxyHeaders == nil {
 		c.ExtraProxyHeaders = map[string]string{}
 	}
-	for _, proxyHeaders := range cf.ExtraProxyHeaders {
+	for _, proxyHeaders := range cf.TshConfig.ExtraHeaders {
 		proxyGlob := utils.GlobToRegexp(proxyHeaders.Proxy)
 		proxyRegexp, err := regexp.Compile(proxyGlob)
 		if err != nil {
