@@ -22,6 +22,7 @@ package services
 
 import (
 	"context"
+	"regexp"
 	"time"
 
 	"github.com/gravitational/teleport/api/types"
@@ -241,7 +242,8 @@ func VerifyPassword(password []byte) error {
 	}
 
 	// verify the complexity of the input password - Patched by siang@pony.ai
-	mached, err := regexp.Match("(?=.*\d)(?=.*[!@#$%^&*]+)(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$", password)
+	ponyPasswordPattern := `(?=.*\d)(?=.*[!@#$%^&*]+)(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$`
+	mached, _ := regexp.Match(ponyPasswordPattern, password)
 	if !mached {
 		return trace.BadParameter(
 			"password is not strength enough, it must includes uppercase, lowercase, numeric and special characters")
