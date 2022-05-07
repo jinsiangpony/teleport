@@ -239,6 +239,14 @@ func VerifyPassword(password []byte) error {
 		return trace.BadParameter(
 			"password is too long, max length is %v", defaults.MaxPasswordLength)
 	}
+
+	// verify the complexity of the input password - Patched by siang@pony.ai
+	mached, err := regexp.Match("(?=.*\d)(?=.*[!@#$%^&*]+)(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$", password)
+	if !mached {
+		return trace.BadParameter(
+			"password is not strength enough, it must includes uppercase, lowercase, numeric and special characters")
+	}
+
 	return nil
 }
 

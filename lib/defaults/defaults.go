@@ -165,7 +165,7 @@ const (
 	HOTPTokenDigits = 6
 
 	// MinPasswordLength is minimum password length
-	MinPasswordLength = 6
+	MinPasswordLength = 9
 
 	// MaxPasswordLength is maximum password length (for sanity)
 	MaxPasswordLength = 128
