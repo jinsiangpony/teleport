@@ -22,7 +22,6 @@ package services
 
 import (
 	"context"
-	"regexp"
 	"time"
 
 	"github.com/gravitational/teleport/api/types"
@@ -32,6 +31,7 @@ import (
 	"github.com/gokyle/hotp"
 	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
+	passwordvalidator "github.com/wagslane/go-password-validator"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -242,11 +242,12 @@ func VerifyPassword(password []byte) error {
 	}
 
 	// verify the complexity of the input password - Patched by siang@pony.ai
-	ponyPasswordPattern := `(?=.*\d)(?=.*[!@#$%^&*]+)(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$`
-	mached, _ := regexp.Match(ponyPasswordPattern, password)
-	if !mached {
-		return trace.BadParameter(
-			"password is not strength enough, it must includes uppercase, lowercase, numeric and special characters")
+	// The EntropyBits here calculated based on https://dropbox.tech/security/zxcvbn-realistic-password-strength-estimation
+	// log2(67^9) ~= 54
+	const EntropyBits = 54
+	err := passwordvalidator.Validate(string(password), EntropyBits)
+	if err != nil {
+		return trace.BadParameter("password strength error ", err)
 	}
 
 	return nil

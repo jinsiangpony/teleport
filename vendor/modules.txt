@@ -257,8 +257,6 @@ github.com/gravitational/form
 github.com/gravitational/kingpin
 # github.com/gravitational/license v0.0.0-20210218173955-6d8fb49b117a
 ## explicit
-github.com/gravitational/license
-github.com/gravitational/license/constants
 # github.com/gravitational/oxy v0.0.0-20210316180922-c73d80d27348
 ## explicit
 github.com/gravitational/oxy/connlimit
@@ -267,9 +265,6 @@ github.com/gravitational/oxy/ratelimit
 github.com/gravitational/oxy/utils
 # github.com/gravitational/reporting v0.0.0-20180907002058-ac7b85c75c4c
 ## explicit
-github.com/gravitational/reporting
-github.com/gravitational/reporting/client
-github.com/gravitational/reporting/types
 # github.com/gravitational/roundtrip v1.0.0
 ## explicit
 github.com/gravitational/roundtrip
@@ -281,6 +276,7 @@ github.com/gravitational/teleport/api/client/webclient
 github.com/gravitational/teleport/api/constants
 github.com/gravitational/teleport/api/defaults
 github.com/gravitational/teleport/api/identityfile
+github.com/gravitational/teleport/api/metadata
 github.com/gravitational/teleport/api/profile
 github.com/gravitational/teleport/api/types
 github.com/gravitational/teleport/api/types/events
@@ -485,6 +481,9 @@ github.com/tstranex/u2f
 ## explicit
 github.com/vulcand/predicate
 github.com/vulcand/predicate/builder
+# github.com/wagslane/go-password-validator v0.3.0
+## explicit
+github.com/wagslane/go-password-validator
 # github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076
 ## explicit
 github.com/xeipuuv/gojsonpointer
