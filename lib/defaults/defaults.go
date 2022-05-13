@@ -170,6 +170,11 @@ const (
 	// MaxPasswordLength is maximum password length (for sanity)
 	MaxPasswordLength = 128
 
+	// Password entropybits
+	// The EntropyBits here calculated based on https://dropbox.tech/security/zxcvbn-realistic-password-strength-estimation
+	// log2(67^9) ~= 54
+	PasswordEntropyBits = 54
+
 	// IterationLimit is a default limit if it's not set
 	IterationLimit = 100
 

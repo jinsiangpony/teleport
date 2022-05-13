@@ -663,6 +663,8 @@ github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijb
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/vulcand/predicate v1.1.0 h1:Gq/uWopa4rx/tnZu2opOSBqHK63Yqlou/SzrbwdJiNg=
 github.com/vulcand/predicate v1.1.0/go.mod h1:mlccC5IRBoc2cIFmCB8ZM62I3VDb6p2GXESMHa3CnZg=
+github.com/wagslane/go-password-validator v0.3.0 h1:vfxOPzGHkz5S146HDpavl0cw1DSVP061Ry2PX0/ON6I=
+github.com/wagslane/go-password-validator v0.3.0/go.mod h1:TI1XJ6T5fRdRnHqHt14pvy1tNVnrwe7m3/f1f2fDphQ=
 github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076 h1:KM4T3G70MiR+JtqplcYkNVoNz7pDwYaBxWBXQK804So=
 github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c h1:XZWnr3bsDQWAZg4Ne+cPoXRPILrNlPNQfxBuwLl43is=
