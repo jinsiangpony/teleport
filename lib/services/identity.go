@@ -242,8 +242,6 @@ func VerifyPassword(password []byte) error {
 	}
 
 	// verify the complexity of the input password - Patched by siang@pony.ai
-	// The EntropyBits here calculated based on https://dropbox.tech/security/zxcvbn-realistic-password-strength-estimation
-	// log2(67^9) ~= 54
 	err := passwordvalidator.Validate(string(password), defaults.PasswordEntropyBits)
 	if err != nil {
 		return trace.BadParameter(
